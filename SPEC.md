@@ -275,6 +275,15 @@ Use `@jsquash/avif` (WASM libavif, from Squoosh) for all AVIF encoding, on every
 
 **Decided:** `{preset-or-shader}_{canvas-label}_{shortHash}.{ext}` where `shortHash` is a hash of the state object. Makes exports traceable back to a look.
 
+### 6.4 Copy to clipboard
+
+**Added 2026-08-31 (Walker).** Alongside the PNG/AVIF downloads, a "Copy image" action puts the composited result on the system clipboard so it can be pasted straight into Slack, a deck, a doc, etc.
+
+- **PNG only.** `image/png` is the one raster format the async Clipboard API accepts for writing across browsers; `image/avif` is not clipboard-writable anywhere. No format choice is exposed on this action.
+- Same composite as the PNG export (§6.1) — reuses that exact path, no second pipeline.
+- The write is issued inside the click's user-activation window (the `ClipboardItem` receives the pending blob as a promise) or Safari rejects it.
+- No filename involved; nothing is written to disk.
+
 ---
 
 ## 7. Phases and acceptance criteria
