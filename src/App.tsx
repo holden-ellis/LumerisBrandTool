@@ -66,6 +66,7 @@ function App() {
 
   const [isEncodingAvif, setIsEncodingAvif] = useState(false)
   const [copyLinkLabel, setCopyLinkLabel] = useState('Copy link')
+  const [copyImageLabel, setCopyImageLabel] = useState('Copy image')
 
   // SPEC.md §5.2 — shareable state lives in the URL hash. Runs once on
   // mount, not on every hash change (that's a "load a link", not a "sync
@@ -311,6 +312,25 @@ function App() {
     }
   }
 
+  // SPEC.md §6.4 — copy the composited image to the clipboard. PNG only:
+  // 'image/png' is the one raster type every browser's async clipboard
+  // accepts to write. The ClipboardItem gets the *promise* from exportPng()
+  // rather than an awaited Blob so navigator.clipboard.write() is still
+  // called synchronously inside the click's user-activation window — Safari
+  // rejects the write otherwise. exportPng() itself reads the WebGL buffer
+  // synchronously before its first await (see useCanvasRenderer), so the
+  // frame is captured in-gesture regardless.
+  const handleCopyImage = async () => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': exportPng() })])
+      setCopyImageLabel('Copied!')
+    } catch (err) {
+      console.error('Copy image to clipboard failed', err)
+      setCopyImageLabel('Copy failed')
+    }
+    setTimeout(() => setCopyImageLabel('Copy image'), 1500)
+  }
+
   const handleExportAvif = async () => {
     setIsEncodingAvif(true)
     try {
@@ -432,6 +452,9 @@ function App() {
             </button>
             <button type="button" disabled={!imageSize} onClick={() => void handleExportPng()}>
               Export PNG
+            </button>
+            <button type="button" disabled={!imageSize} onClick={() => void handleCopyImage()}>
+              {copyImageLabel}
             </button>
             <button
               type="button"
