@@ -126,7 +126,7 @@ The UI is generated from `uniformSchema`. Adding a seventh shader should require
 
 **Color policy — decided:** all `color` typed uniforms (shader fg/bg/ink, vector fill) are constrained to a locked brand palette, not a free color picker. Consistent with "no raw parameter editing outside sanctioned ranges" (§1). `uniformSchema` color fields resolve to a swatch picker over the brand set, not an arbitrary color input — implemented in `ParamControls.tsx` once the palette landed (below), replacing the native-picker placeholder every color param shipped with until then.
 
-**Brand palette — landed 2026-08-12.** 11 colors (`src/colors.ts`), delivered by Walker; may grow after testing these initial values. Every shader/vector color default across the app was re-picked from this set (was ad-hoc placeholder hex before) — see each module's own inline notes for which colors and why.
+**Brand palette — landed 2026-08-12, expanded 2026-08-31.** 23 colors (`src/colors.ts`): the initial 11 delivered by Walker, plus 12 added 2026-08-31. The additions are purely additive — no existing swatch was removed or changed, so every shader/vector color default (all picked from the original 11) is still valid. Every shader/vector color default across the app was re-picked from the set when it first landed (was ad-hoc placeholder hex before) — see each module's own inline notes for which colors and why. The list is stored sorted light→dark for the picker; order carries no other meaning.
 
 ### 4.2 The six shaders are not homogeneous
 
@@ -298,7 +298,7 @@ Deliverables:
 - ~~Dither decision~~ — **done.** See §4.3 (ordered dithering only).
 - ~~Scribble asset set: count, source, normalization~~ — **done.** See §4.4 (~10–20 assets, Holden Ellis, bundled inline).
 - **Parameter ranges (min/max/default) per shader** — still open, the guardrails that keep output on-brand. Blocks tightening the existing `uniformSchema` ranges (current min/max are my own reasonable-feeling defaults, not brand-approved limits).
-- ~~Brand palette swatch values~~ — **done.** See §4.1, §9 (landed 2026-08-12).
+- ~~Brand palette swatch values~~ — **done.** See §4.1, §9 (landed 2026-08-12; expanded to 23 on 2026-08-31).
 - **Input image spec**: expected subject matter, resolution floor, color profile — still open (§9).
 
 **Done when:** the remaining three items above are resolved. Comps and the combination/dither/scribble decisions are already in.
@@ -366,7 +366,7 @@ Resolved during Phase 0 planning (2026-08-10):
 | Export filename convention | `{preset-or-shader}_{canvas-label}_{shortHash}.{ext}`. See §6.3. |
 | Accessibility/contrast requirements on output | None — exports are flat brand/creative assets, not UI, so WCAG contrast doesn't apply to them. (The tool's own UI should still follow normal accessibility practice, as a separate default.) |
 | Does the client want usage analytics? | No — stays consistent with the zero-backend philosophy in §2.1. |
-| Brand palette swatch values | Landed 2026-08-12 — 11 colors, `src/colors.ts`. See §4.1. May grow after Walker tests these initial values. |
+| Brand palette swatch values | Landed 2026-08-12 (11 colors), expanded 2026-08-31 to 23 (`src/colors.ts`). Additive only — no removals. See §4.1. |
 
 Still open:
 
