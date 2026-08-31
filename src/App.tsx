@@ -1,12 +1,13 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
   type DragEvent,
   type PointerEvent,
 } from 'react'
-import { CANVAS_SIZES } from './canvasSizes'
+import { CANVAS_SIZES, NATIVE_ID, resolveCanvasSize } from './canvasSizes'
 import { useCanvasRenderer } from './useCanvasRenderer'
 import { DEFAULT_FIT, clampFit, coverRatios, type FitState, type Size } from './fit'
 import { SHADER_MODULES, defaultUniformValues, type ShaderModule, type UniformValue } from './shaders'
@@ -33,10 +34,15 @@ interface DragOrigin {
 
 function App() {
   const [sizeId, setSizeId] = useState(CANVAS_SIZES[0].id)
-  const size = CANVAS_SIZES.find((s) => s.id === sizeId) ?? CANVAS_SIZES[0]
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const [imageSize, setImageSize] = useState<Size | null>(null)
+
+  // SPEC.md §3.1 — every fixed size is a static lookup; 'native' resolves its
+  // dimensions from the loaded image. Memoized so `size` keeps a stable
+  // identity across renders (useCanvasRenderer's effect depends on it).
+  const size = useMemo(() => resolveCanvasSize(sizeId, imageSize), [sizeId, imageSize])
+
   const [fit, setFit] = useState<FitState>(DEFAULT_FIT)
 
   const [shader, setShader] = useState<ShaderModule>(SHADER_MODULES[0])
@@ -335,11 +341,19 @@ function App() {
             <label className="size-select">
               Canvas size
               <select value={sizeId} onChange={(e) => setSizeId(e.target.value)}>
-                {CANVAS_SIZES.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label} ({s.width}×{s.height})
-                  </option>
-                ))}
+                {CANVAS_SIZES.map((s) => {
+                  // 'native' has no fixed dimensions — show the resolved size
+                  // once an image is loaded, and just the label before that.
+                  const resolved = s.id === NATIVE_ID ? resolveCanvasSize(s.id, imageSize) : s
+                  const dims =
+                    s.id === NATIVE_ID && !imageSize ? '' : ` (${resolved.width}×${resolved.height})`
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                      {dims}
+                    </option>
+                  )
+                })}
               </select>
             </label>
             <label className="upload">

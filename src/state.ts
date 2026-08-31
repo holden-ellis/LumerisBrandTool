@@ -61,6 +61,9 @@ export interface AppStateResolved {
 // against missing a param a newer build added to a shader/vector since it
 // was created.
 export function resolveState(state: AppState): AppStateResolved {
+  // For 'native' this carries placeholder dimensions — the app re-resolves
+  // the real size from the loaded image via resolveCanvasSize(). Only .id is
+  // consumed from here.
   const size = CANVAS_SIZES.find((s) => s.id === state.canvas) ?? CANVAS_SIZES[0]
   const shader = SHADER_MODULES.find((s) => s.id === state.shader.id) ?? SHADER_MODULES[0]
   const vector = VECTOR_MODULES.find((v) => v.id === state.vector.id) ?? VECTOR_MODULES[0]

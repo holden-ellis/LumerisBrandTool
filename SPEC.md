@@ -29,7 +29,7 @@ Two layers, one flat output:
 
 No compute backend. Rationale:
 
-- Max canvas is 1920×1080 — realtime WebGL handles this comfortably, so there is no render job to offload.
+- Max canvas is bounded by a 1920px longest edge (§3.1) — realtime WebGL handles this comfortably, so there is no render job to offload.
 - AVIF encoding runs in WASM on the client (§6.2), so the one format that might have justified a server does not.
 - A studio shipping a tool for a client team should not also be signing up to operate a service. Zero backend means zero ops, zero cost, zero uptime obligation.
 
@@ -70,14 +70,25 @@ Rationale: this is what campaign consistency actually requires — five differen
 | Landscape HD | 1920 × 1080 | 16:9 |
 | Portrait | 1080 × 1350 | 4:5 |
 | Story | 1080 × 1920 | 9:16 |
+| Landscape 3:2 | 1620 × 1080 | 3:2 |
+| Landscape 4:3 | 1440 × 1080 | 4:3 |
+| Landscape 5:4 | 1350 × 1080 | 5:4 |
+| Portrait 3:4 | 1080 × 1440 | 3:4 |
+| Portrait 2:3 | 1080 × 1620 | 2:3 |
+
+**Fixed sizes use a 1080px base (short) edge**, consistent across the list and within the render cap (§2.1). Added 2026-08-31 (Walker): the five ratio rows above extend the original five.
+
+**Native (image ratio).** One additional option whose dimensions are *not* fixed: the canvas takes the loaded image's exact aspect ratio, scaled so its longest edge is at most 1920 (matching Story's long edge). Smaller images are used at their real pixel size, never upscaled. Before an image is loaded it shows a neutral 1:1 placeholder frame. In stored state (§5) and export filenames (§6.3) it is recorded as `native` and re-resolved per image on load — so a shared link or preset carrying `native` adapts to whatever image the recipient has open, consistent with §2.4.
 
 ### 3.2 Image fit
 
-Aspect ratios span 1.91:1 to 9:16, so cropping is mandatory, not optional. Required behaviour:
+Fixed-size aspect ratios span 1.91:1 to 9:16, so cropping is mandatory, not optional. Required behaviour:
 
 - Cover-fit by default (image fills canvas, overflow cropped)
 - User pan and zoom, clamped so the canvas can never contain empty area
 - Fit state is part of preserved state (§5) and survives a canvas-size change by re-clamping rather than resetting
+
+The **Native** size (§3.1) is the one case where the canvas already matches the image's ratio, so cover-fit crops nothing at zoom 1. Pan/zoom stays available (the user can still zoom in to reframe); the same clamp keeps zoomed pans inside the image.
 
 ### 3.3 Parameter normalization — **important**
 
@@ -298,7 +309,7 @@ Deliverables:
 
 Image upload → texture → crop/fit → single per-pixel shader → canvas at true export size → PNG and AVIF export.
 
-**Done when:** one shader works end to end at all five canvas sizes, and a 1080×1920 AVIF export produces a valid AVIF file in Chrome, Firefox and Safari, verified by inspecting the file header — not by trusting the blob type.
+**Done when:** one shader works end to end at every canvas size in §3.1, and a 1080×1920 AVIF export produces a valid AVIF file in Chrome, Firefox and Safari, verified by inspecting the file header — not by trusting the blob type.
 
 *Prove export in Phase 1, not Phase 5. It is the assumption most likely to bite, and everything else is built on top of it.*
 
@@ -308,7 +319,7 @@ Image upload → texture → crop/fit → single per-pixel shader → canvas at 
 
 Pixelated, Dither, Halftone against the module contract. Then ASCII (atlas-based) and Pattern fill (revised to procedural tonal bands — see §4.2, not atlas-based after all). Then Riso, with multi-pass.
 
-**Done when:** all six render correctly at all five canvas sizes, UI is generated entirely from `uniformSchema`, and adding a shader requires touching no UI code.
+**Done when:** all six render correctly at every canvas size in §3.1, UI is generated entirely from `uniformSchema`, and adding a shader requires touching no UI code.
 
 **Verified 2026-08-10 (#21):** all 6 real shaders + `none` (35 combinations) checked in Chrome — GL errors, canvas dimensions, and both PNG/AVIF export (valid file headers, not just blob type) at every combination, no failures. Confirmed via code inspection that `ShaderControls.tsx`, `App.tsx`, and `useCanvasRenderer.ts` contain zero shader-ID-specific branches — five shaders (#15/#16/#17/#18/#20) were added after the contract existed and none of them touched the UI layer. No cross-browser (Firefox/Safari) re-check here, unlike Phase 1's sign-off — that was specifically about `canvas.toBlob('image/avif')`'s browser inconsistency, already resolved and untouched by Phase 2; this phase's "Done when" doesn't call for it, and Phase 2 doesn't touch the export code path at all, only adds shader modules that flow through it.
 
@@ -339,7 +350,7 @@ Explicitly out of scope, to prevent scope drift mid-build:
 - Animation or video output
 - User-authored shaders or GLSL editing
 - Batch processing / multiple images at once
-- Arbitrary custom canvas dimensions beyond the five listed
+- User-typed / arbitrary custom canvas dimensions. (The **Native** option in §3.1 — canvas ratio derived from the loaded image, longest edge clamped to 1920 — is allowed; a free width/height entry field is not.)
 
 Several of these are reasonable v2 candidates. None should appear in v1.
 
@@ -353,7 +364,7 @@ Resolved during Phase 0 planning (2026-08-10):
 |---|---|
 | Scribble asset set — count, source, who produces it | ~10–20 assets, art-directed SVGs from Holden Ellis. See §4.4. |
 | Color handling: locked to brand colors, or freely picked? | Locked to brand palette — no free picker. See §4.1. |
-| Any canvas size not on the list (print, email header)? | No — the five sizes in §3.1 cover it. |
+| Any canvas size not on the list (print, email header)? | No fixed additions beyond §3.1's list. Since 2026-08-31 that list is ten fixed sizes plus a **Native** (image-ratio) option; still no free dimension entry (§8). |
 | Export filename convention | `{preset-or-shader}_{canvas-label}_{shortHash}.{ext}`. See §6.3. |
 | Accessibility/contrast requirements on output | None — exports are flat brand/creative assets, not UI, so WCAG contrast doesn't apply to them. (The tool's own UI should still follow normal accessibility practice, as a separate default.) |
 | Does the client want usage analytics? | No — stays consistent with the zero-backend philosophy in §2.1. |
