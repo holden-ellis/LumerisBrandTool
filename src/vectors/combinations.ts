@@ -2,13 +2,13 @@
 // overlay) is always valid for every shader and isn't listed per-entry
 // here; allowedVectorIds prepends it unconditionally.
 const SANCTIONED_VECTOR_IDS: Record<string, string[]> = {
-  none: ['dot', 'square'],
+  none: ['dot', 'square', 'cross'],
   pixelated: ['scribbles'],
   dither: ['scribbles'],
   halftone: ['scribbles'],
   ascii: ['scribbles'],
   'pattern-fill': ['scribbles'],
-  riso: ['dot', 'square'],
+  riso: ['dot', 'square', 'cross'],
 }
 
 export function allowedVectorIds(shaderId: string): string[] {

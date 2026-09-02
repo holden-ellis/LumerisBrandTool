@@ -7,9 +7,10 @@ import { VECTOR_MODULES, defaultUniformValues as defaultVectorValues, type Vecto
 // migration; presets/shared links will outlive the code that made them.
 export const STATE_SCHEMA_VERSION = 1
 
-// SPEC.md §5.1's note: seed only applies to Dot/Square. Scribbles has no
-// stochastic component (vectors/scribbles/index.tsx), so it carries none.
-const SEEDED_VECTOR_IDS = new Set(['dot', 'square'])
+// SPEC.md §5.1's note: seed only applies to Dot/Square/X — all three use
+// the same seeded coverageGridCells placement. Scribbles has no stochastic
+// component (vectors/scribbles/index.tsx), so it carries none.
+const SEEDED_VECTOR_IDS = new Set(['dot', 'square', 'cross'])
 
 export interface AppState {
   v: number
